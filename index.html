@@ -143,42 +143,39 @@
             position: absolute;
             top: 8px;
             right: 8px;
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            background-color: rgba(74, 158, 255, 0.2);
-            border: 1px solid rgba(74, 158, 255, 0.3);
+            width: 24px;
+            height: 24px;
+            border-radius: 0;
+            background-color: transparent;
+            border: none;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
             opacity: 0;
-            transition: all 0.3s ease;
+            transition: opacity 0.3s ease;
             z-index: 2;
-            backdrop-filter: blur(4px);
+            padding: 0;
+            margin: 0;
+            outline: none;
+        }
+
+        .edit-btn:hover {
+            transform: scale(1.2);
+            background-color: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
         }
 
         .bookmark:hover .edit-btn {
             opacity: 1;
-            background-color: rgba(74, 158, 255, 0.3);
-            border-color: rgba(74, 158, 255, 0.5);
         }
 
-        .edit-btn:hover {
-            background-color: var(--accent-color) !important;
-            border-color: var(--accent-color) !important;
-            transform: scale(1.1);
-        }
-
-        .edit-btn svg {
+        .edit-btn img {
             width: 16px;
             height: 16px;
-            stroke: var(--text-color);
-            transition: stroke 0.3s ease;
-        }
-
-        .edit-btn:hover svg {
-            stroke: white;
+            pointer-events: none;
+            user-select: none;
         }
 
         .modal {
