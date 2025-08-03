@@ -13,7 +13,7 @@
             --card-bg: #2d2d2d;
             --text-color: #f0f0f0;
             --accent-color: #4a9eff;
-            --grid-columns: auto-fill; /* auto-fill или число */
+            --grid-columns: 8; /* Теперь только фиксированное значение */
         }
 
         * {
@@ -56,7 +56,6 @@
         }
 
         .controls {
-            /*background-color: rgba(0, 0, 0, 0.9);*/
             display: flex;
             gap: 10px;
         }
@@ -81,7 +80,7 @@
             overflow-y: auto;
             padding: 10px;
             border-radius: 8px;
-            /*background-color: rgba(0, 0, 0, 0.2);*/
+            background-color: rgba(0, 0, 0, 0.2);
             display: flex;
             justify-content: center;
         }
@@ -258,16 +257,43 @@
             margin-bottom: 15px;
         }
 
-        .radio-group {
-            display: flex;
-            gap: 15px;
-            margin-top: 5px;
-        }
-
-        .radio-option {
+        .slider-container {
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 10px;
+        }
+
+        .slider-value {
+            min-width: 30px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: #333;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            cursor: pointer;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            cursor: pointer;
         }
     </style>
 </head>
@@ -329,21 +355,11 @@
                 <button id="close-settings">&times;</button>
             </div>
             <div class="settings-group">
-                <label>Тип сетки:</label>
-                <div class="radio-group">
-                    <div class="radio-option">
-                        <input type="radio" id="grid-auto" name="grid-type" value="auto" checked>
-                        <label for="grid-auto">Автоматическая</label>
-                    </div>
-                    <div class="radio-option">
-                        <input type="radio" id="grid-fixed" name="grid-type" value="fixed">
-                        <label for="grid-fixed">Фиксированная</label>
-                    </div>
+                <label>Количество столбцов:</label>
+                <div class="slider-container">
+                    <input type="range" id="columns-slider" min="4" max="20" value="8">
+                    <div class="slider-value" id="columns-value">8</div>
                 </div>
-            </div>
-            <div class="form-group" id="columns-group" style="display: none;">
-                <label for="columns-input">Количество столбцов:</label>
-                <input type="number" id="columns-input" min="1" max="20" value="6">
             </div>
             <div class="form-actions">
                 <button id="save-settings">Сохранить</button>
@@ -369,18 +385,13 @@
             const deleteBookmarkBtn = document.getElementById('delete-bookmark');
             const modalTitle = document.getElementById('modal-title');
             const notification = document.getElementById('notification');
-            const gridAuto = document.getElementById('grid-auto');
-            const gridFixed = document.getElementById('grid-fixed');
-            const columnsGroup = document.getElementById('columns-group');
-            const columnsInput = document.getElementById('columns-input');
+            const columnsSlider = document.getElementById('columns-slider');
+            const columnsValue = document.getElementById('columns-value');
             const saveSettingsBtn = document.getElementById('save-settings');
             
             let bookmarks = JSON.parse(localStorage.getItem('bookmarks')) || [];
             let currentEditId = null;
-            let settings = JSON.parse(localStorage.getItem('gridSettings')) || {
-                type: 'auto',
-                columns: 6
-            };
+            let gridColumns = parseInt(localStorage.getItem('gridColumns')) || 8;
 
             // Инициализация
             applyGridSettings();
@@ -400,14 +411,10 @@
                 bookmarkForm.addEventListener('submit', saveBookmark);
                 deleteBookmarkBtn.addEventListener('click', deleteBookmark);
                 saveSettingsBtn.addEventListener('click', saveGridSettings);
-                
-                // Переключатели типа сетки
-                gridAuto.addEventListener('change', () => {
-                    columnsGroup.style.display = 'none';
-                });
-                
-                gridFixed.addEventListener('change', () => {
-                    columnsGroup.style.display = 'block';
+
+                // Ползунок количества столбцов
+                columnsSlider.addEventListener('input', (e) => {
+                    columnsValue.textContent = e.target.value;
                 });
 
                 // Изменение размера ярлыков
@@ -455,11 +462,7 @@
             }
 
             function applyGridSettings() {
-                if (settings.type === 'auto') {
-                    document.documentElement.style.setProperty('--grid-columns', 'auto-fill');
-                } else {
-                    document.documentElement.style.setProperty('--grid-columns', settings.columns);
-                }
+                document.documentElement.style.setProperty('--grid-columns', gridColumns);
             }
 
             function renderBookmarks() {
@@ -557,27 +560,15 @@
 
             function openSettingsModal() {
                 // Устанавливаем текущие настройки
-                if (settings.type === 'auto') {
-                    gridAuto.checked = true;
-                    columnsGroup.style.display = 'none';
-                } else {
-                    gridFixed.checked = true;
-                    columnsGroup.style.display = 'block';
-                    columnsInput.value = settings.columns;
-                }
+                columnsSlider.value = gridColumns;
+                columnsValue.textContent = gridColumns;
                 
                 settingsModal.style.display = 'flex';
             }
 
             function saveGridSettings() {
-                if (gridAuto.checked) {
-                    settings.type = 'auto';
-                } else {
-                    settings.type = 'fixed';
-                    settings.columns = parseInt(columnsInput.value) || 6;
-                }
-                
-                localStorage.setItem('gridSettings', JSON.stringify(settings));
+                gridColumns = parseInt(columnsSlider.value);
+                localStorage.setItem('gridColumns', gridColumns);
                 applyGridSettings();
                 settingsModal.style.display = 'none';
                 showNotification('Настройки сохранены');
