@@ -49,7 +49,7 @@ try {
 }
 
 lockPref("browser.startup.homepage", base_page);
-lockPref("browser.startup.page", 1);
+lockPref("browser.startup.page", 3);
 lockPref("browser.startup.homepage_override.mstone", "ignore");
 lockPref("browser.newtabpage.activity-stream.aboutHome.enabled", false);
 
