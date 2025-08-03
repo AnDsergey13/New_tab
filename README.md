@@ -32,16 +32,24 @@ sudo nano /usr/lib/librewolf/librewolf.cfg
 
 null;
 
+const base_page = "file:///home/New_tab/index.html";
+
 //
 try {
   const ctx = {};
   ChromeUtils.defineESModuleGetters(ctx, {
     AboutNewTab: "resource:///modules/AboutNewTab.sys.mjs"
   });
-  ctx.AboutNewTab.newTabURL = "file:///home/New_tab/index.html";
+  ctx.AboutNewTab.newTabURL = base_page;
 } catch (e) {
   ChromeUtils.reportError(e);
 }
+
+lockPref("browser.startup.homepage", base_page);
+lockPref("browser.startup.page", 1);
+lockPref("browser.startup.homepage_override.mstone", "ignore");
+lockPref("browser.newtabpage.activity-stream.aboutHome.enabled", false);
+
 /** ------------------------------
 * My settings. Changes base page.
 * ------------------------------- */
@@ -57,13 +65,7 @@ try {
 
 ---
 
-#### Шаг 3: Настройка страницы внутри Librewolf
-
-В настройках `about:preferences#home` в качестве домашней страницы укажите путь `file:///home/New_tab/index.html`
-
----
-
-#### Шаг 4: Перезапуск Librewolf  
+#### Шаг 3: Перезапуск Librewolf  
 Закройте все процессы браузера и запустите его снова. При открытии новой вкладки будет загружена страница:  
 `file:///home/New_tab/index.html`.  
 
