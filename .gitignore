@@ -1,1 +1,9 @@
 *.json
+*.bak
+
+*.png
+*.svg
+*.ico
+*.jpg
+*.webp
+*.gif
