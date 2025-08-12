@@ -27,14 +27,31 @@
     .controls{display:flex;gap:8px;align-items:center;}
     button{background:var(--accent-color);color:#fff;border:none;padding:8px 12px;border-radius:6px;cursor:pointer}
     button.ghost{background:transparent;border:1px solid rgba(255,255,255,.06)}
-    .bookmarks-container{flex:1;overflow:auto;padding:10px;border-radius:8px;background:rgba(0,0,0,.12);display:flex;justify-content:center}
+    .bookmarks-container{
+        flex:1;
+        overflow:auto;
+        padding:10px;
+        border-radius:8px;
+        background:rgba(0,0,0,.12);
+        display:flex;
+        justify-content:center;    /* центрируем саму сетку внутри контейнера */
+        align-items:center;        /* при желании вертикально центрировать, можно убрать */
+    }
+
+    /* переменная для промежутка между плитками — удобно потом менять */
+    :root { --grid-gap: 12px; }
+
     .bookmarks-grid{
-      display:grid;
-      gap:12px;
-      align-content:start;
-      grid-template-columns:repeat(var(--grid-columns),minmax(var(--bookmark-size),1fr));
-      width:100%;
-      max-width:1400px;
+        display:grid;
+        gap:var(--grid-gap);
+        align-content:start;
+        /* фиксированная ширина каждой колонки — расстояния будут постоянными */
+        grid-template-columns: repeat(var(--grid-columns), var(--bookmark-size));
+        /* сетка не растягивается на 100% — она «shrink-wrap» по содержимому */
+        width: auto;
+        max-width: none;
+        justify-content: center; /* при лишней ширине центрируем колонки внутри grid */
+        grid-auto-rows: var(--bookmark-size); /* строки той же высоты для ровного вида */
     }
     .bookmark{
       background:var(--card-bg);border-radius:8px;padding:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;
