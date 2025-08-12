@@ -13,7 +13,7 @@ fetch_icons.py
 - Записывает JSON с ensure_ascii=False (чтобы русские заголовки остались в файле).
 
 Пример:
-    uv run fetch_icons.py --input bookmarks.json --outdir /home/user/New_tab/icons/
+    uv run fetch_icons.py --input bookmarks.json --outdir /home/New_tab/icons/
 
 Зависимости:
     uv add requests tqdm
