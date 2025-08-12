@@ -1,694 +1,512 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Новая вкладка</title>
-    <link rel="icon" type="image/png" href="icons/librewolf128.png">
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
-    <style>
-        :root {
-            --bookmark-size: 100px;
-            --bg-color: #1a1a1a;
-            --card-bg: #2d2d2d;
-            --text-color: #f0f0f0;
-            --accent-color: #4a9eff;
-            --grid-columns: 8; /* Теперь только фиксированное значение */
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            height: 100vh;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .background {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: var(--bg-color);
-            z-index: -1;
-        }
-
-        .container {
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            padding: 20px;
-        }
-
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .controls {
-            display: flex;
-            gap: 10px;
-        }
-
-        button {
-            background-color: var(--accent-color);
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-            z-index: 10;
-        }
-
-        button:hover {
-            background-color: #3a8eef;
-        }
-
-        .bookmarks-container {
-            flex: 1;
-            overflow-y: auto;
-            padding: 10px;
-            border-radius: 8px;
-            background-color: rgba(0, 0, 0, 0.2);
-            display: flex;
-            justify-content: center;
-        }
-
-        .bookmarks-grid {
-            display: grid;
-            grid-template-columns: repeat(var(--grid-columns), minmax(var(--bookmark-size), 1fr));
-            gap: 15px;
-            align-content: start;
-            min-height: 100%;
-            max-width: 100%;
-        }
-
-        .bookmark {
-            background-color: var(--card-bg);
-            border-radius: 8px;
-            padding: 10px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            position: relative;
-            height: var(--bookmark-size);
-            width: var(--bookmark-size);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-        }
-
-        .bookmark:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
-        }
-
-        .sortable-ghost {
-            opacity: 0.4;
-            background: #4a4a4a;
-        }
-
-        .sortable-drag {
-            opacity: 0.5;
-        }
-
-        .bookmark img {
-            width: 50%;
-            height: 50%;
-            object-fit: contain;
-            margin-bottom: 8px;
-        }
-
-        .bookmark-title {
-            font-size: 12px;
-            text-align: center;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            width: 100%;
-        }
-
-        .edit-btn {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            width: 24px;
-            height: 24px;
-            border-radius: 0;
-            background-color: transparent;
-            border: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            z-index: 2;
-            padding: 0;
-            margin: 0;
-            outline: none;
-        }
-
-        .edit-btn:hover {
-            transform: scale(1.2);
-            background-color: transparent !important;
-            border: none !important;
-            box-shadow: none !important;
-        }
-
-        .bookmark:hover .edit-btn {
-            opacity: 1;
-        }
-
-        .edit-btn img {
-            width: 16px;
-            height: 16px;
-            pointer-events: none;
-            user-select: none;
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .modal-content {
-            background-color: var(--card-bg);
-            padding: 20px;
-            border-radius: 8px;
-            width: 400px;
-            max-width: 90%;
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 15px;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 5px;
-        }
-
-        input, select {
-            width: 100%;
-            padding: 8px;
-            border-radius: 4px;
-            border: 1px solid #555;
-            background-color: #333;
-            color: var(--text-color);
-        }
-
-        .form-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-        }
-
-        .empty-row {
-            height: var(--bookmark-size);
-            width: 100%;
-            grid-column: 1 / -1;
-        }
-
-        .notification {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background-color: var(--accent-color);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 4px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-            z-index: 2000;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        .notification.show {
-            opacity: 1;
-        }
-
-        .add-bookmark {
-            border: 2px dashed var(--accent-color);
-            background-color: rgba(74, 158, 255, 0.1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            color: var(--accent-color);
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-
-        .add-bookmark:hover {
-            background-color: rgba(74, 158, 255, 0.2);
-            transform: none;
-        }
-
-        .settings-group {
-            margin-bottom: 15px;
-        }
-
-        .slider-container {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .slider-value {
-            min-width: 30px;
-            text-align: center;
-            font-weight: bold;
-        }
-
-        input[type="range"] {
-            -webkit-appearance: none;
-            width: 100%;
-            height: 8px;
-            border-radius: 5px;
-            background: #333;
-            outline: none;
-        }
-
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: var(--accent-color);
-            cursor: pointer;
-        }
-
-        input[type="range"]::-moz-range-thumb {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: var(--accent-color);
-            cursor: pointer;
-        }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Новая вкладка</title>
+  <link rel="icon" type="image/png" href="icons/librewolf128.png">
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js" defer></script>
+  <style>
+    :root{
+      --bookmark-size: 100px;
+      --bg-color: #1a1a1a;
+      --card-bg: #2d2d2d;
+      --text-color: #f0f0f0;
+      --accent-color: #4a9eff;
+      --grid-columns: 8;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background:var(--bg-color);
+      color:var(--text-color);
+      height:100vh;overflow:hidden;
+    }
+    .container{display:flex;flex-direction:column;height:100vh;padding:20px;}
+    .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+    .controls{display:flex;gap:8px;align-items:center;}
+    button{background:var(--accent-color);color:#fff;border:none;padding:8px 12px;border-radius:6px;cursor:pointer}
+    button.ghost{background:transparent;border:1px solid rgba(255,255,255,.06)}
+    .bookmarks-container{flex:1;overflow:auto;padding:10px;border-radius:8px;background:rgba(0,0,0,.12);display:flex;justify-content:center}
+    .bookmarks-grid{
+      display:grid;
+      gap:12px;
+      align-content:start;
+      grid-template-columns:repeat(var(--grid-columns),minmax(var(--bookmark-size),1fr));
+      width:100%;
+      max-width:1400px;
+    }
+    .bookmark{
+      background:var(--card-bg);border-radius:8px;padding:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+      height:var(--bookmark-size);width:var(--bookmark-size);cursor:pointer;position:relative;box-shadow:0 4px 8px rgba(0,0,0,.3);
+      transition:transform .16s,box-shadow .16s;
+    }
+    .bookmark:hover{transform:translateY(-4px);box-shadow:0 10px 18px rgba(0,0,0,.45)}
+    .bookmark img{width:50%;height:50%;object-fit:contain;margin-bottom:8px}
+    .bookmark-title{font-size:12px;text-align:center;overflow:hidden;text-overflow:ellipsis;width:100%}
+    .edit-btn{position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:4px;background:transparent;border:none;opacity:0;cursor:pointer;padding:0}
+    .bookmark:hover .edit-btn{opacity:1}
+    .edit-btn img{width:16px;height:16px;pointer-events:none}
+    .add-bookmark{border:2px dashed var(--accent-color);background:rgba(74,158,255,.06);font-size:28px;display:flex;align-items:center;justify-content:center;color:var(--accent-color)}
+    .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;align-items:center;justify-content:center}
+    .modal.show{display:flex}
+    .modal-content{background:var(--card-bg);padding:18px;border-radius:8px;width:420px;max-width:96%}
+    .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+    .form-group{margin-bottom:12px}
+    label{display:block;margin-bottom:6px}
+    input[type="text"],input[type="url"],select{width:100%;padding:8px;border-radius:6px;border:1px solid #555;background:#333;color:var(--text-color)}
+    .form-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:6px}
+    .notification{position:fixed;right:20px;bottom:20px;padding:10px 14px;border-radius:6px;background:var(--accent-color);color:#fff;z-index:2000;opacity:0;transition:opacity .25s}
+    .notification.show{opacity:1}
+    /* Ghost/drag classes from Sortable */
+    .sortable-ghost{opacity:.4;background:#4a4a4a}
+    .sortable-drag{opacity:.5}
+    input[type="range"]{width:100%}
+  </style>
 </head>
 <body>
-    <div class="background"></div>
-    
-    <div class="container">
-        <div class="header">
-            <h1></h1>
-            <div class="controls">
-                <button id="add-bookmark">Добавить ярлык</button>
-                <button id="settings-btn">Настройки</button>
-                <button id="export-btn">Экспорт</button>
-                <button id="import-btn">Импорт</button>
-                <input type="file" id="import-file" style="display: none;" accept=".json">
-            </div>
-        </div>
-        
-        <div class="bookmarks-container">
-            <div class="bookmarks-grid" id="bookmarks-grid">
-                <!-- Ярлыки будут добавляться здесь динамически -->
-            </div>
-        </div>
+  <div class="container" id="app">
+    <div class="header">
+      <h1 aria-hidden="true"></h1>
+      <div class="controls" role="toolbar">
+        <button id="add-bookmark">Добавить ярлык</button>
+        <button id="settings-btn" class="ghost">Настройки</button>
+        <button id="export-btn" class="ghost">Экспорт</button>
+        <button id="import-btn" class="ghost">Импорт</button>
+        <input id="import-file" type="file" accept=".json" style="display:none">
+      </div>
     </div>
 
-    <!-- Модальное окно для редактирования -->
-    <div class="modal" id="edit-modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 id="modal-title">Редактирование ярлыка</h2>
-                <button id="close-modal">&times;</button>
-            </div>
-            <form id="bookmark-form">
-                <div class="form-group">
-                    <label for="bookmark-title-input">Название:</label>
-                    <input type="text" id="bookmark-title-input" required>
-                </div>
-                <div class="form-group">
-                    <label for="bookmark-url-input">URL:</label>
-                    <input type="url" id="bookmark-url-input" required>
-                </div>
-                <div class="form-group">
-                    <label for="bookmark-icon-input">Иконка (URL или путь к файлу):</label>
-                    <input type="text" id="bookmark-icon-input" placeholder="Оставьте пустым для авто-иконки">
-                </div>
-                <div class="form-actions">
-                    <button type="button" id="delete-bookmark">Удалить</button>
-                    <button type="submit">Сохранить</button>
-                </div>
-            </form>
-        </div>
+    <div class="bookmarks-container">
+      <div class="bookmarks-grid" id="bookmarks-grid" aria-live="polite"></div>
     </div>
+  </div>
 
-    <!-- Модальное окно для настроек -->
-    <div class="modal" id="settings-modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Настройки сетки</h2>
-                <button id="close-settings">&times;</button>
-            </div>
-            <div class="settings-group">
-                <label>Количество столбцов:</label>
-                <div class="slider-container">
-                    <input type="range" id="columns-slider" min="4" max="20" value="8">
-                    <div class="slider-value" id="columns-value">8</div>
-                </div>
-            </div>
-            <div class="form-actions">
-                <button id="save-settings">Сохранить</button>
-            </div>
+  <!-- Edit / Add Modal -->
+  <div class="modal" id="edit-modal" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modal-title">Редактирование</h2>
+        <button id="close-modal" aria-label="Закрыть">&times;</button>
+      </div>
+      <form id="bookmark-form">
+        <div class="form-group">
+          <label for="bookmark-title-input">Название</label>
+          <input id="bookmark-title-input" type="text" required />
         </div>
+        <div class="form-group">
+          <label for="bookmark-url-input">URL</label>
+          <input id="bookmark-url-input" type="url" required />
+        </div>
+        <div class="form-group">
+          <label for="bookmark-icon-input">Иконка (URL или оставить пустым)</label>
+          <input id="bookmark-icon-input" type="text" placeholder="Оставьте пустым для авто-иконки" />
+        </div>
+        <div class="form-actions">
+          <button type="button" id="delete-bookmark" class="ghost">Удалить</button>
+          <button type="submit">Сохранить</button>
+        </div>
+      </form>
     </div>
+  </div>
 
-    <div class="notification" id="notification"></div>
+  <!-- Settings Modal -->
+  <div class="modal" id="settings-modal" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Настройки сетки</h2>
+        <button id="close-settings" aria-label="Закрыть">&times;</button>
+      </div>
+      <div class="form-group">
+        <label for="columns-slider">Количество столбцов: <span id="columns-value">8</span></label>
+        <input id="columns-slider" type="range" min="4" max="20" value="8" />
+      </div>
+      <div class="form-actions">
+        <button id="save-settings">Сохранить</button>
+      </div>
+    </div>
+  </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const bookmarksGrid = document.getElementById('bookmarks-grid');
-            const addBookmarkBtn = document.getElementById('add-bookmark');
-            const settingsBtn = document.getElementById('settings-btn');
-            const exportBtn = document.getElementById('export-btn');
-            const importBtn = document.getElementById('import-btn');
-            const importFile = document.getElementById('import-file');
-            const editModal = document.getElementById('edit-modal');
-            const settingsModal = document.getElementById('settings-modal');
-            const closeModal = document.getElementById('close-modal');
-            const closeSettings = document.getElementById('close-settings');
-            const bookmarkForm = document.getElementById('bookmark-form');
-            const deleteBookmarkBtn = document.getElementById('delete-bookmark');
-            const modalTitle = document.getElementById('modal-title');
-            const notification = document.getElementById('notification');
-            const columnsSlider = document.getElementById('columns-slider');
-            const columnsValue = document.getElementById('columns-value');
-            const saveSettingsBtn = document.getElementById('save-settings');
-            
-            let bookmarks = JSON.parse(localStorage.getItem('bookmarks')) || [];
-            let currentEditId = null;
-            let gridColumns = parseInt(localStorage.getItem('gridColumns')) || 8;
+  <div class="notification" id="notification" role="status" aria-live="polite"></div>
 
-            // Инициализация
-            applyGridSettings();
-            renderBookmarks();
-            setupEventListeners();
-            setupSortable();
+  <script>
+  'use strict';
 
-            function setupEventListeners() {
-                // Обработчики событий
-                addBookmarkBtn.addEventListener('click', () => openModal());
-                settingsBtn.addEventListener('click', () => openSettingsModal());
-                exportBtn.addEventListener('click', exportBookmarks);
-                importBtn.addEventListener('click', () => importFile.click());
-                importFile.addEventListener('change', importBookmarks);
-                closeModal.addEventListener('click', () => editModal.style.display = 'none');
-                closeSettings.addEventListener('click', () => settingsModal.style.display = 'none');
-                bookmarkForm.addEventListener('submit', saveBookmark);
-                deleteBookmarkBtn.addEventListener('click', deleteBookmark);
-                saveSettingsBtn.addEventListener('click', saveGridSettings);
+  // ---- Utilities ----
+  const $ = selector => document.querySelector(selector);
+  const $$ = selector => Array.from(document.querySelectorAll(selector));
 
-                // Ползунок количества столбцов
-                columnsSlider.addEventListener('input', (e) => {
-                    columnsValue.textContent = e.target.value;
-                });
+  function uid() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2,8);
+  }
 
-                // Изменение размера ярлыков
-                document.addEventListener('wheel', (e) => {
-                    if (e.ctrlKey) {
-                        e.preventDefault();
-                        const size = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--bookmark-size'));
-                        const newSize = e.deltaY < 0 ? Math.min(size + 10, 200) : Math.max(size - 10, 60);
-                        document.documentElement.style.setProperty('--bookmark-size', `${newSize}px`);
-                    }
-                });
-            }
+  function debounce(fn, wait = 200) {
+    let t;
+    return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), wait); };
+  }
 
-            function setupSortable() {
-                // Инициализация SortableJS
-                new Sortable(bookmarksGrid, {
-                    animation: 150,
-                    ghostClass: 'sortable-ghost',
-                    dragClass: 'sortable-drag',
-                    onEnd: function(evt) {
-                        // Обновляем порядок ярлыков в массиве
-                        const newOrder = [];
-                        const bookmarkElements = bookmarksGrid.querySelectorAll('.bookmark:not(.add-bookmark)');
-                        
-                        bookmarkElements.forEach(el => {
-                            const index = parseInt(el.dataset.index);
-                            if (!isNaN(index)) {
-                                newOrder.push(bookmarks[index]);
-                            }
-                        });
-                        
-                        bookmarks = newOrder;
-                        saveToLocalStorage();
-                        // Обновляем data-index после перетаскивания
-                        updateDataIndexes();
-                    }
-                });
-            }
+  // safer URL -> favicon providers with fallback
+  function bestFavicon(url) {
+    try {
+      const u = new URL(url);
+      const encoded = encodeURIComponent(url);
+      // try google (high res) then duckduckgo, then default placeholder
+      return `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&url=${encoded}&size=256`;
+    } catch (e) {
+      return '';
+    }
+  }
 
-            function updateDataIndexes() {
-                const bookmarkElements = bookmarksGrid.querySelectorAll('.bookmark:not(.add-bookmark)');
-                bookmarkElements.forEach((el, index) => {
-                    el.dataset.index = index;
-                });
-            }
+  // ---- App State & Selectors ----
+  const state = {
+    bookmarks: [],
+    currentEditId: null,
+    gridColumns: parseInt(localStorage.getItem('gridColumns')) || 8
+  };
 
-            function applyGridSettings() {
-                document.documentElement.style.setProperty('--grid-columns', gridColumns);
-            }
+  const els = {
+    bookmarksGrid: $('#bookmarks-grid'),
+    addBtn: $('#add-bookmark'),
+    settingsBtn: $('#settings-btn'),
+    exportBtn: $('#export-btn'),
+    importBtn: $('#import-btn'),
+    importFile: $('#import-file'),
+    editModal: $('#edit-modal'),
+    settingsModal: $('#settings-modal'),
+    closeModal: $('#close-modal'),
+    closeSettings: $('#close-settings'),
+    bookmarkForm: $('#bookmark-form'),
+    deleteBtn: $('#delete-bookmark'),
+    modalTitle: $('#modal-title'),
+    notif: $('#notification'),
+    columnsSlider: $('#columns-slider'),
+    columnsValue: $('#columns-value'),
+    saveSettingsBtn: $('#save-settings'),
+    titleInput: $('#bookmark-title-input'),
+    urlInput: $('#bookmark-url-input'),
+    iconInput: $('#bookmark-icon-input')
+  };
 
-            function renderBookmarks() {
-                bookmarksGrid.innerHTML = '';
-                
-                bookmarks.forEach((bookmark, index) => {
-                    const bookmarkEl = createBookmarkElement(bookmark, index);
-                    bookmarksGrid.appendChild(bookmarkEl);
-                });
+  // debounce saving to localStorage
+  const saveToLocalStorage = debounce(() => {
+    localStorage.setItem('bookmarks', JSON.stringify(state.bookmarks));
+  }, 150);
 
-                // Добавляем элемент для создания нового ярлыка
-                const addBookmarkEl = document.createElement('div');
-                addBookmarkEl.className = 'bookmark add-bookmark';
-                addBookmarkEl.innerHTML = '+';
-                addBookmarkEl.addEventListener('click', () => openModal());
-                bookmarksGrid.appendChild(addBookmarkEl);
-            }
+  // ---- Initialization ----
+  function init(){
+    loadState();
+    applyGridSettings();
+    bindUI();
+    renderBookmarks();
+    setupSortable();
+  }
 
-            function createBookmarkElement(bookmark, index) {
-                const bookmarkEl = document.createElement('div');
-                bookmarkEl.className = 'bookmark';
-                bookmarkEl.dataset.index = index;
-                
-                // Добавляем данные в data-атрибуты для экспорта
-                bookmarkEl.dataset.title = bookmark.title;
-                bookmarkEl.dataset.url = bookmark.url;
-                bookmarkEl.dataset.icon = bookmark.icon || '';
-                
-                const img = document.createElement('img');
-                // Используем иконку из данных или получаем автоматически
-                img.src = bookmark.icon || getHighQualityFaviconUrl(bookmark.url);
-                img.alt = bookmark.title;
-                
-                const title = document.createElement('div');
-                title.className = 'bookmark-title';
-                title.textContent = bookmark.title;
-                
-                const editBtn = document.createElement('button');
-                editBtn.className = 'edit-btn';
-                // SVG иконка карандаша
-                editBtn.innerHTML = `<img src="icons/pencil.svg" style="width: 16px; height: 16px;">`;
-                editBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    openModal(bookmark, index);
-                });
-                
-                bookmarkEl.appendChild(img);
-                bookmarkEl.appendChild(title);
-                bookmarkEl.appendChild(editBtn);
-                
-                // Обработчики событий для ярлыка
-                bookmarkEl.addEventListener('click', (e) => {
-                    if (e.button === 0) { // ЛКМ
-                        window.location.href = bookmark.url;
-                    }
-                });
-                
-                bookmarkEl.addEventListener('mousedown', (e) => {
-                    if (e.button === 1) { // Колесико
-                        e.preventDefault();
-                        window.open(bookmark.url, '_blank');
-                    }
-                });
-                
-                return bookmarkEl;
-            }
+  function loadState(){
+    const loaded = JSON.parse(localStorage.getItem('bookmarks') || '[]');
+    // keep shape: each bookmark {id, title, url, icon}
+    state.bookmarks = Array.isArray(loaded) ? loaded.map(b => ({ id: b.id || uid(), title: b.title||'', url: b.url||'', icon: b.icon||'' })) : [];
+  }
 
-            function getHighQualityFaviconUrl(url) {
-                try {
-                    const domain = new URL(url).hostname;
-                    // Используем сервис, который предоставляет иконки в высоком качестве
-                    // Пытаемся получить PNG иконку максимального размера
-                    return `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=${encodeURIComponent(url)}&size=256`;
-                } catch (e) {
-                    return 'https://picsum.photos/seed/default/50/50.jpg';
-                }
-            }
+  // ---- Rendering ----
+  function renderBookmarks(){
+    const grid = els.bookmarksGrid;
+    grid.innerHTML = '';
+    // render items in order of state.bookmarks
+    state.bookmarks.forEach(b => {
+      const el = createBookmarkElement(b);
+      grid.appendChild(el);
+    });
+    // add bookmark "add" tile
+    const addTile = document.createElement('div');
+    addTile.className = 'bookmark add-bookmark';
+    addTile.setAttribute('data-action','add');
+    addTile.setAttribute('role','button');
+    addTile.title = 'Добавить ярлык';
+    addTile.textContent = '+';
+    grid.appendChild(addTile);
+  }
 
-            function openModal(bookmark = null, index = null) {
-                currentEditId = index;
-                
-                if (bookmark) {
-                    modalTitle.textContent = 'Редактирование ярлыка';
-                    document.getElementById('bookmark-title-input').value = bookmark.title;
-                    document.getElementById('bookmark-url-input').value = bookmark.url;
-                    document.getElementById('bookmark-icon-input').value = bookmark.icon || '';
-                    deleteBookmarkBtn.style.display = 'block';
-                } else {
-                    modalTitle.textContent = 'Добавление ярлыка';
-                    bookmarkForm.reset();
-                    deleteBookmarkBtn.style.display = 'none';
-                }
-                
-                editModal.style.display = 'flex';
-            }
+  function createBookmarkElement(bookmark){
+    const el = document.createElement('div');
+    el.className = 'bookmark';
+    el.dataset.id = bookmark.id;
 
-            function openSettingsModal() {
-                // Устанавливаем текущие настройки
-                columnsSlider.value = gridColumns;
-                columnsValue.textContent = gridColumns;
-                
-                settingsModal.style.display = 'flex';
-            }
+    // store attributes for export convenience
+    el.dataset.title = bookmark.title;
+    el.dataset.url = bookmark.url;
+    el.dataset.icon = bookmark.icon || '';
 
-            function saveGridSettings() {
-                gridColumns = parseInt(columnsSlider.value);
-                localStorage.setItem('gridColumns', gridColumns);
-                applyGridSettings();
-                settingsModal.style.display = 'none';
-                showNotification('Настройки сохранены');
-            }
+    const img = document.createElement('img');
+    img.alt = bookmark.title || 'icon';
+    img.src = bookmark.icon || bestFavicon(bookmark.url) || 'https://picsum.photos/seed/default/50/50.jpg';
+    img.addEventListener('error', () => {
+      // fallback provider
+      img.src = `https://icons.duckduckgo.com/ip3/${new URL(bookmark.url).hostname}.ico`;
+      // if still fails, set a placeholder after short delay
+      setTimeout(()=> { if (!img.complete || img.naturalWidth === 0) img.src = 'https://picsum.photos/seed/default/50/50.jpg'; }, 600);
+    });
 
-            function saveBookmark(e) {
-                e.preventDefault();
-                
-                const title = document.getElementById('bookmark-title-input').value;
-                const url = document.getElementById('bookmark-url-input').value;
-                const iconInput = document.getElementById('bookmark-icon-input').value;
-                const icon = iconInput || getHighQualityFaviconUrl(url);
-                
-                if (currentEditId !== null) {
-                    bookmarks[currentEditId] = { title, url, icon };
-                } else {
-                    bookmarks.push({ title, url, icon });
-                }
-                
-                saveToLocalStorage();
-                renderBookmarks();
-                editModal.style.display = 'none';
-                showNotification('Ярлык сохранен');
-            }
+    const title = document.createElement('div');
+    title.className = 'bookmark-title';
+    title.textContent = bookmark.title || bookmark.url;
 
-            function deleteBookmark() {
-                if (currentEditId !== null) {
-                    bookmarks.splice(currentEditId, 1);
-                    saveToLocalStorage();
-                    renderBookmarks();
-                    editModal.style.display = 'none';
-                    showNotification('Ярлык удален');
-                }
-            }
+    const editBtn = document.createElement('button');
+    editBtn.className = 'edit-btn';
+    editBtn.title = 'Редактировать';
+    editBtn.innerHTML = `<img src="icons/pencil.svg" alt="edit">`;
+    editBtn.dataset.action = 'edit';
 
-            function exportBookmarks() {
-                // Получаем данные прямо из DOM в текущем порядке
-                const bookmarkElements = bookmarksGrid.querySelectorAll('.bookmark:not(.add-bookmark)');
-                const orderedBookmarks = [];
-                
-                bookmarkElements.forEach(el => {
-                    orderedBookmarks.push({
-                        title: el.dataset.title,
-                        url: el.dataset.url,
-                        icon: el.dataset.icon
-                    });
-                });
+    el.appendChild(img);
+    el.appendChild(title);
+    el.appendChild(editBtn);
 
-                const dataStr = JSON.stringify(orderedBookmarks);
-                const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-                
-                // Получаем текущую дату и время
-                const now = new Date();
-                const dateStr = now.toISOString().replace(/:/g, '-').replace('T', '_').slice(0, -5);
-                const exportFileDefaultName = `bookmarks_${dateStr}.json`;
-                
-                const linkElement = document.createElement('a');
-                linkElement.setAttribute('href', dataUri);
-                linkElement.setAttribute('download', exportFileDefaultName);
-                linkElement.click();
-                
-                showNotification('Ярлыки экспортированы');
-            }
+    return el;
+  }
 
-            function importBookmarks(e) {
-                const file = e.target.files[0];
-                if (!file) return;
-                
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    try {
-                        const importedBookmarks = JSON.parse(event.target.result);
-                        if (Array.isArray(importedBookmarks)) {
-                            // Сохраняем текущий порядок
-                            bookmarks = importedBookmarks;
-                            saveToLocalStorage();
-                            renderBookmarks();
-                            showNotification('Ярлыки импортированы');
-                        } else {
-                            showNotification('Неверный формат файла', true);
-                        }
-                    } catch (error) {
-                        showNotification('Ошибка при импорте: ' + error.message, true);
-                    }
-                };
-                reader.readAsText(file);
-            }
+  // ---- Sortable setup ----
+  function setupSortable(){
+    new Sortable(els.bookmarksGrid, {
+      animation: 150,
+      ghostClass: 'sortable-ghost',
+      dragClass: 'sortable-drag',
+      filter: '.add-bookmark',
+      onEnd: (evt) => {
+        // rebuild state.bookmarks according to DOM order (skip add-bookmark)
+        const ids = Array.from(els.bookmarksGrid.children)
+          .filter(ch => !ch.classList.contains('add-bookmark'))
+          .map(ch => ch.dataset.id);
+        const newOrder = ids.map(id => state.bookmarks.find(b => b.id === id)).filter(Boolean);
+        state.bookmarks = newOrder;
+        saveToLocalStorage();
+        // re-render to update data-attributes consistently
+        renderBookmarks();
+      }
+    });
+  }
 
-            function saveToLocalStorage() {
-                localStorage.setItem('bookmarks', JSON.stringify(bookmarks));
-            }
+  // ---- UI Bindings (delegation where possible) ----
+  function bindUI(){
+    // main controls
+    els.addBtn.addEventListener('click', () => openModalForAdd());
+    els.settingsBtn.addEventListener('click', openSettingsModal);
+    els.exportBtn.addEventListener('click', exportBookmarks);
+    els.importBtn.addEventListener('click', () => els.importFile.click());
+    els.importFile.addEventListener('change', importBookmarks);
+    els.closeModal.addEventListener('click', closeEditModal);
+    els.closeSettings.addEventListener('click', closeSettingsModal);
+    els.saveSettingsBtn.addEventListener('click', saveGridSettings);
+    els.columnsSlider.addEventListener('input', (e) => {
+      els.columnsValue.textContent = e.target.value;
+      document.documentElement.style.setProperty('--grid-columns', e.target.value);
+    });
 
-            function showNotification(message, isError = false) {
-                notification.textContent = message;
-                notification.style.backgroundColor = isError ? '#e74c3c' : 'var(--accent-color)';
-                notification.classList.add('show');
-                
-                setTimeout(() => {
-                    notification.classList.remove('show');
-                }, 3000);
-            }
-        });
-    </script>
+    // delegated clicks inside grid
+    els.bookmarksGrid.addEventListener('click', (e) => {
+      const target = e.target;
+      const tile = target.closest('.bookmark');
+      if (!tile) return;
+      if (tile.classList.contains('add-bookmark') || tile.dataset.action === 'add') {
+        openModalForAdd();
+        return;
+      }
+      // edit button
+      if (target.closest('.edit-btn') || target.dataset.action === 'edit') {
+        const id = tile.dataset.id;
+        openModalForEdit(id);
+        return;
+      }
+      // click on tile -> navigate
+      const id = tile.dataset.id;
+      const bookmark = state.bookmarks.find(b => b.id === id);
+      if (bookmark && bookmark.url) {
+        window.location.href = bookmark.url;
+      }
+    });
+
+    // middle click opens in new tab
+    els.bookmarksGrid.addEventListener('auxclick', (e) => {
+      if (e.button !== 1) return;
+      const tile = e.target.closest('.bookmark');
+      if (!tile || tile.classList.contains('add-bookmark')) return;
+      const bookmark = state.bookmarks.find(b => b.id === tile.dataset.id);
+      if (bookmark && bookmark.url) window.open(bookmark.url, '_blank');
+    });
+
+    // form submit
+    els.bookmarkForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      saveBookmarkFromForm();
+    });
+
+    els.deleteBtn.addEventListener('click', () => {
+      if (!state.currentEditId) return;
+      state.bookmarks = state.bookmarks.filter(b => b.id !== state.currentEditId);
+      state.currentEditId = null;
+      saveToLocalStorage();
+      renderBookmarks();
+      closeEditModal();
+      showNotification('Ярлык удален');
+    });
+
+    // keyboard: ESC closes modals
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeEditModal();
+        closeSettingsModal();
+      }
+    });
+
+    // Ctrl + wheel — scale tile size
+    document.addEventListener('wheel', (e) => {
+      if (!e.ctrlKey) return;
+      e.preventDefault();
+      const sizeStr = getComputedStyle(document.documentElement).getPropertyValue('--bookmark-size').trim().replace('px','');
+      const size = parseInt(sizeStr) || 100;
+      const newSize = e.deltaY < 0 ? Math.min(size + 10, 200) : Math.max(size - 10, 60);
+      document.documentElement.style.setProperty('--bookmark-size', newSize + 'px');
+    }, { passive: false });
+  }
+
+  // ---- Modal helpers ----
+  function openModalForAdd(){
+    state.currentEditId = null;
+    els.modalTitle.textContent = 'Добавление ярлыка';
+    els.bookmarkForm.reset();
+    els.deleteBtn.style.display = 'none';
+    showModal(els.editModal);
+  }
+
+  function openModalForEdit(id){
+    const bookmark = state.bookmarks.find(b => b.id === id);
+    if (!bookmark) return;
+    state.currentEditId = id;
+    els.modalTitle.textContent = 'Редактирование ярлыка';
+    els.titleInput.value = bookmark.title;
+    els.urlInput.value = bookmark.url;
+    els.iconInput.value = bookmark.icon || '';
+    els.deleteBtn.style.display = 'block';
+    showModal(els.editModal);
+  }
+
+  function showModal(modal){
+    modal.classList.add('show');
+    modal.setAttribute('aria-hidden','false');
+    // focus first input for accessibility
+    setTimeout(()=> els.titleInput.focus(), 100);
+  }
+
+  function closeEditModal(){
+    els.editModal.classList.remove('show');
+    els.editModal.setAttribute('aria-hidden','true');
+  }
+
+  function openSettingsModal(){
+    els.columnsSlider.value = state.gridColumns;
+    els.columnsValue.textContent = state.gridColumns;
+    showModal(els.settingsModal);
+  }
+
+  function closeSettingsModal(){
+    els.settingsModal.classList.remove('show');
+    els.settingsModal.setAttribute('aria-hidden','true');
+  }
+
+  function saveGridSettings(){
+    const v = parseInt(els.columnsSlider.value);
+    state.gridColumns = v;
+    localStorage.setItem('gridColumns', v);
+    document.documentElement.style.setProperty('--grid-columns', v);
+    closeSettingsModal();
+    showNotification('Настройки сохранены');
+  }
+
+  function applyGridSettings(){
+    document.documentElement.style.setProperty('--grid-columns', state.gridColumns);
+    els.columnsSlider.value = state.gridColumns;
+    els.columnsValue.textContent = state.gridColumns;
+  }
+
+  // ---- Bookmark CRUD ----
+  function saveBookmarkFromForm(){
+    const title = els.titleInput.value.trim();
+    const url = els.urlInput.value.trim();
+    const icon = els.iconInput.value.trim();
+
+    if (!title || !url) {
+      showNotification('Название и URL обязательны', true);
+      return;
+    }
+
+    if (state.currentEditId) {
+      // update
+      state.bookmarks = state.bookmarks.map(b => b.id === state.currentEditId ? { ...b, title, url, icon: icon || b.icon || bestFavicon(url) } : b);
+      showNotification('Ярлык обновлен');
+    } else {
+      // add
+      const newBookmark = { id: uid(), title, url, icon: icon || bestFavicon(url) };
+      state.bookmarks.push(newBookmark);
+      showNotification('Ярлык сохранен');
+    }
+
+    saveToLocalStorage();
+    renderBookmarks();
+    closeEditModal();
+  }
+
+  // ---- Import / Export ----
+  function exportBookmarks(){
+    // export in shown order
+    const items = state.bookmarks.map(b => ({ title: b.title, url: b.url, icon: b.icon }));
+    const dataStr = JSON.stringify(items, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const now = new Date().toISOString().replace(/:/g,'-').replace('T','_').slice(0, -5);
+    a.href = url;
+    a.download = `bookmarks_${now}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    showNotification('Ярлыки экспортированы');
+  }
+
+  function importBookmarks(e){
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(evt){
+      try {
+        const parsed = JSON.parse(evt.target.result);
+        if (!Array.isArray(parsed)) throw new Error('Файл должен быть массивом ярлыков');
+        // normalize and replace
+        state.bookmarks = parsed.map(b => ({ id: b.id || uid(), title: b.title || '', url: b.url || '', icon: b.icon || '' }));
+        saveToLocalStorage();
+        renderBookmarks();
+        showNotification('Ярлыки импортированы');
+      } catch (err) {
+        showNotification('Ошибка при импорте: ' + (err.message || err), true);
+      } finally {
+        // reset file input to allow re-import same file later
+        els.importFile.value = '';
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  // ---- Notifications ----
+  let notifTimer = null;
+  function showNotification(message, isError = false){
+    const n = els.notif;
+    n.textContent = message;
+    n.style.backgroundColor = isError ? '#e74c3c' : '';
+    n.classList.add('show');
+    clearTimeout(notifTimer);
+    notifTimer = setTimeout(()=> n.classList.remove('show'), 3000);
+  }
+
+  // start app
+  document.addEventListener('DOMContentLoaded', init);
+  </script>
 </body>
 </html>
